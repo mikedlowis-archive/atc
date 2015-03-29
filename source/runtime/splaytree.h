@@ -14,7 +14,7 @@ typedef struct node_t {
     struct node_t* right;
 } node_t;
 
-typedef int (*comp_fn_t)(uintptr_t a, uintptr_t b);
+typedef int (*comp_fn_t)(uintptr_t key, uintptr_t cval);
 
 typedef struct splaytree_t {
     comp_fn_t compare;
@@ -25,7 +25,7 @@ splaytree_t* splaytree_create(comp_fn_t cfn);
 
 void splaytree_destroy(splaytree_t* tree);
 
-void splaytree_insert(splaytree_t* tree);
+void splaytree_insert(splaytree_t* tree, uintptr_t value);
 
 uintptr_t splaytree_lookup(splaytree_t* tree, uintptr_t value);
 
