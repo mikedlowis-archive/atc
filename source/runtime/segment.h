@@ -10,7 +10,7 @@
 
 #define NUM_BLOCKS    (256u)
 
-#define BLOCKMAP_SIZE (sizeof(uint16_t) + (NUM_BLOCKS / sizeof(uint16_t)))
+#define BLOCKMAP_SIZE ((sizeof(uint16_t) * 8) + 1)
 
 typedef struct {
     uintptr_t blocksize;
