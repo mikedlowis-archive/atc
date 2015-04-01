@@ -7,13 +7,20 @@
 
 heap_t* heap_create(void)
 {
-    heap_t* heap = (heap_t*)calloc(1u, sizeof(heap_t));
-    return heap;
+    return (heap_t*)calloc(1u, sizeof(heap_t));;
 }
 
 void heap_destroy(heap_t* heap)
 {
     int i;
+    block_t* current = heap->blocks;
+    /* Free all the large blocks */
+    while (NULL != current) {
+        block_t* deadite = current;
+        current = deadite->next;
+        free(deadite);
+    }
+    /* Free all of the small block segments */
     for (i = 0; i < NUM_HEAP_STACKS; i++) {
         segnode_t* curr = heap->heaps[i];
         while (NULL != curr) {
@@ -23,13 +30,13 @@ void heap_destroy(heap_t* heap)
             free(deadite);
         }
     }
+    /* Free the heap itself */
     free(heap);
 }
 
-void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
+static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
 {
-    uintptr_t index = num_slots - HEAP_INDEX_OFFSET;
-    printf("index: %d, %d\n", (unsigned int)index, (unsigned int)num_slots);
+    uintptr_t index = (num_slots >= MIN_NUM_SLOTS) ? (num_slots - HEAP_INDEX_OFFSET) : 0;
     segnode_t* node = heap->heaps[index];
     if ((NULL == node) || segment_full(node->segment)) {
         segnode_t* newnode = (segnode_t*)malloc(sizeof(segnode_t));
@@ -41,9 +48,12 @@ void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
     return segment_alloc(heap->heaps[index]->segment);
 }
 
-void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
+static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
 {
-    return NULL;
+    block_t* blk = (block_t*)malloc(sizeof(block_t) + (num_slots * sizeof(uintptr_t)));
+    blk->next = heap->blocks;
+    heap->blocks = blk;
+    return (&blk->data[0]);
 }
 
 void* heap_allocate(heap_t* heap, uintptr_t num_slots)
