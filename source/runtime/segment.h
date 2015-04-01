@@ -23,6 +23,8 @@ segment_t* segment_create(uintptr_t blocksize);
 
 void segment_destroy(segment_t* seg);
 
+bool segment_full(segment_t* seg);
+
 void* segment_alloc(segment_t* seg);
 
 #endif /* SEGMENT_H */

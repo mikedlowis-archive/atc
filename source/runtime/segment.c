@@ -30,10 +30,14 @@ void segment_destroy(segment_t* seg)
     free(seg);
 }
 
+bool segment_full(segment_t* seg) {
+    return (0u == seg->blockmap[0]);
+}
+
 void* segment_alloc(segment_t* seg) {
     void* obj = NULL;
     /* Check if the segment has any free blocks */
-    if (0u != seg->blockmap[0]) {
+    if (!segment_full(seg)) {
         /* Find the free block */
         uint8_t root_idx   = get_free_index(seg->blockmap[0]);
         uint8_t submap_idx = get_free_index(seg->blockmap[root_idx + 1]);

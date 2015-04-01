@@ -7,7 +7,13 @@
 
 #include "segment.h"
 
-#define NUM_HEAP_STACKS ((sizeof(uintptr_t) * 8u) - 3u)
+#define MIN_NUM_SLOTS (2u)
+
+#define MAX_NUM_SLOTS ((sizeof(uintptr_t)*8u) - 1u)
+
+#define HEAP_INDEX_OFFSET (MIN_NUM_SLOTS)
+
+#define NUM_HEAP_STACKS ((sizeof(uintptr_t) * 8u) - 1)
 
 typedef struct segnode_t {
     segment_t* segment;
@@ -16,16 +22,13 @@ typedef struct segnode_t {
 
 typedef struct {
     uintptr_t bytes_allocated;
-    struct {
-        segnode_t* first;
-        segnode_t* last;
-    } heaps[NUM_HEAP_STACKS];
+    segnode_t* heaps[NUM_HEAP_STACKS];
 } heap_t;
 
 heap_t* heap_create(void);
 
 void heap_destroy(heap_t* heap);
 
-void* heap_allocate(size_t block_size);
+void* heap_allocate(heap_t* heap, uintptr_t num_slots);
 
 #endif /* HEAP_H */
