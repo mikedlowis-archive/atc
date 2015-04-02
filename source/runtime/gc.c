@@ -1,28 +1,21 @@
 #include "gc.h"
-#include <stdlib.h>
-
-/*****************************************************************************/
+#include "heap.h"
 
 typedef struct {
     uint64_t objmap;
     uint8_t data[];
 } obj_t;
 
+static heap_t* heap = NULL;
+
 void gc_init(void* stack_bottom)
 {
+    heap = heap_create();
 }
 
 void* gc_alloc(uint64_t objmap, size_t num_slots)
 {
-    obj_t* obj;
-    if (num_slots <= (sizeof(uint64_t) - 1u)) {
-        obj = (void*)malloc(sizeof(obj_t) + (num_slots * sizeof(uintptr_t)));
-    } else {
-        obj = (void*)malloc(sizeof(obj_t) + (num_slots * sizeof(uintptr_t)));
-    }
-    obj->objmap = objmap;
-    obj++;
-    return (void*)obj;
+    return heap_allocate(heap, num_slots+1);
 }
 
 void gc_collect(void)
@@ -31,6 +24,7 @@ void gc_collect(void)
 
 void gc_shutdown(void)
 {
+    heap_destroy(heap);
 }
 
 /*****************************************************************************/
