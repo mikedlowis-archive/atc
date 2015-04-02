@@ -10,7 +10,9 @@
 
 void gc_init(void* stack_bottom);
 
-void* gc_alloc(uint64_t objmap, size_t size);
+void* gc_object(uint64_t objmap, size_t num_slots);
+
+void* gc_allocate(size_t size);
 
 void gc_collect(void);
 

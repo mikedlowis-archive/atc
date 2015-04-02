@@ -13,6 +13,25 @@ base_env = BuildEnv.new do |env|
   env.build_dir('modules', 'build/obj/modules')
   # Setup include paths
   env['CPPPATH'] += Dir['source/**/', 'modules/atf/source/']
+  # Turn on all warnings and treat them as errors, Also C99 strict mode
+  env['CFLAGS'] += ['-Wall', '-Wextra', '-Werror']
+  # Enable debug symbols for test
+  if Opts[:profile].include? "test"
+    env['CFLAGS'] += ['-g', '-O0']
+  else
+    env['CFLAGS'] += ['-O3']
+  end
+  # Enable profiling info
+  if Opts[:profile].include? "profile"
+    env['CFLAGS'] += ['-pg']
+    env['LDFLAGS'] += ['-pg']
+  end
+
+  # Enable coverage info
+  if Opts[:profile].include? "coverage"
+    env['CFLAGS'] += ['--coverage']
+    env['LDFLAGS'] += ['--coverage']
+  end
 end
 
 #------------------------------------------------------------------------------

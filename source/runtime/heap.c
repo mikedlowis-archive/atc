@@ -12,7 +12,7 @@ heap_t* heap_create(void)
 
 void heap_destroy(heap_t* heap)
 {
-    int i;
+    unsigned int i;
     block_t* current = heap->blocks;
     /* Free all the large blocks */
     while (NULL != current) {

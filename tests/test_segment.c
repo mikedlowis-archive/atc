@@ -5,7 +5,7 @@ TEST_SUITE(Segment) {
     /* Verify: segment_create
      *************************************************************************/
     TEST(Verify_Create_allocates_and_initializes_a_segment) {
-        int i;
+        unsigned int i;
         segment_t* seg = segment_create(2u, NULL);
         CHECK(seg->blocksize == 2u);
         CHECK(seg->start != NULL);
