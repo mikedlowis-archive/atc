@@ -15,18 +15,13 @@
 
 #define NUM_HEAP_STACKS (MAX_NUM_SLOTS)
 
-typedef struct segnode_t {
-    segment_t* segment;
-    struct segnode_t* next;
-} segnode_t;
-
 typedef struct block_t {
     struct block_t* next;
     uintptr_t data[];
 } block_t;
 
 typedef struct {
-    segnode_t* heaps[NUM_HEAP_STACKS];
+    segment_t* heaps[NUM_HEAP_STACKS];
     block_t* blocks;
 } heap_t;
 

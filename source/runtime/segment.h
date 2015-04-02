@@ -12,14 +12,15 @@
 
 #define BLOCKMAP_SIZE ((sizeof(uint16_t) * 8) + 1)
 
-typedef struct {
+typedef struct segment_t {
+    struct segment_t* next;
     uintptr_t blocksize;
-    uintptr_t* start;
-    uintptr_t* end;
     uint16_t blockmap[BLOCKMAP_SIZE];
+    uintptr_t* end;
+    uintptr_t start[];
 } segment_t;
 
-segment_t* segment_create(uintptr_t blocksize);
+segment_t* segment_create(uintptr_t blocksize, segment_t* next);
 
 void segment_destroy(segment_t* seg);
 

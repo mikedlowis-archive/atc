@@ -14,20 +14,25 @@ static uint8_t get_free_index(int32_t bitmap) {
     return lookup[((uint32_t)((bitmap & -bitmap) * 0x077CB531U)) >> 27];
 }
 
-segment_t* segment_create(uintptr_t blocksize)
+segment_t* segment_create(uintptr_t num_slots, segment_t* next)
 {
-    segment_t* seg = (segment_t*)malloc(sizeof(segment_t));
-    seg->blocksize = blocksize;
-    seg->start = (uintptr_t*)malloc(sizeof(uintptr_t) * blocksize * NUM_BLOCKS);
-    seg->end = (seg->start + (blocksize * NUM_BLOCKS));
+    size_t segsize = sizeof(uintptr_t) * num_slots * NUM_BLOCKS;
+    segment_t* seg = (segment_t*)malloc(sizeof(segment_t) + segsize);
+    seg->next = next;
+    seg->blocksize = num_slots;
+    seg->end = (seg->start + (num_slots * NUM_BLOCKS));
     memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
     return seg;
 }
 
 void segment_destroy(segment_t* seg)
 {
-    free(seg->start);
-    free(seg);
+    segment_t* curr = seg;
+    while (NULL != curr) {
+        segment_t* deadite = curr;
+        curr = curr->next;
+        free(deadite);
+    }
 }
 
 bool segment_full(segment_t* seg) {

@@ -17,18 +17,12 @@ void heap_destroy(heap_t* heap)
     /* Free all the large blocks */
     while (NULL != current) {
         block_t* deadite = current;
-        current = deadite->next;
+        current = current->next;
         free(deadite);
     }
     /* Free all of the small block segments */
     for (i = 0; i < NUM_HEAP_STACKS; i++) {
-        segnode_t* curr = heap->heaps[i];
-        while (NULL != curr) {
-            segnode_t* deadite = curr;
-            curr = deadite->next;
-            segment_destroy(deadite->segment);
-            free(deadite);
-        }
+        segment_destroy(heap->heaps[i]);
     }
     /* Free the heap itself */
     free(heap);
@@ -37,15 +31,11 @@ void heap_destroy(heap_t* heap)
 static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
 {
     uintptr_t index = (num_slots >= MIN_NUM_SLOTS) ? (num_slots - HEAP_INDEX_OFFSET) : 0;
-    segnode_t* node = heap->heaps[index];
-    if ((NULL == node) || segment_full(node->segment)) {
-        segnode_t* newnode = (segnode_t*)malloc(sizeof(segnode_t));
-        newnode->segment = segment_create(num_slots);
-        newnode->next = node;
-        heap->heaps[index] = newnode;
-        node = newnode;
+    segment_t* current = heap->heaps[index];
+    if ((NULL == current) || segment_full(current)) {
+        heap->heaps[index] = segment_create(num_slots, current);
     }
-    return segment_alloc(heap->heaps[index]->segment);
+    return segment_alloc(heap->heaps[index]);
 }
 
 static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)

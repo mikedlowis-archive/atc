@@ -6,7 +6,7 @@ TEST_SUITE(Segment) {
      *************************************************************************/
     TEST(Verify_Create_allocates_and_initializes_a_segment) {
         int i;
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         CHECK(seg->blocksize == 2u);
         CHECK(seg->start != NULL);
         CHECK(seg->end == (seg->start + (NUM_BLOCKS * 2u)));
@@ -18,14 +18,14 @@ TEST_SUITE(Segment) {
     /* Verify: segment_alloc
      *************************************************************************/
     TEST(Verify_alloc_allocates_the_first_block) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         void* obj = segment_alloc(seg);
         CHECK(obj == seg->start);
         segment_destroy(seg);
     }
 
     TEST(Verify_alloc_allocates_the_second_block) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         seg->blockmap[1] = UINT16_MAX-1;
         void* obj = segment_alloc(seg);
         CHECK(obj == &seg->start[2]);
@@ -33,7 +33,7 @@ TEST_SUITE(Segment) {
     }
 
     TEST(Verify_alloc_allocates_the_sixteenth_block) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         seg->blockmap[0] = UINT16_MAX-1;
         seg->blockmap[1] = 0u;
         void* obj = segment_alloc(seg);
@@ -42,7 +42,7 @@ TEST_SUITE(Segment) {
     }
 
     TEST(Verify_alloc_allocates_blocks_consecutively) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         void* obj1 = segment_alloc(seg);
         void* obj2 = segment_alloc(seg);
         void* obj3 = segment_alloc(seg);
@@ -55,7 +55,7 @@ TEST_SUITE(Segment) {
     }
 
     TEST(Verify_alloc_allocates_blocks_consecutively_across_bitmap_boundaries) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         seg->blockmap[1] = 1 << 15;
         void* obj1 = segment_alloc(seg);
         void* obj2 = segment_alloc(seg);
@@ -68,7 +68,7 @@ TEST_SUITE(Segment) {
     }
 
     TEST(Verify_alloc_returns_NULL_if_no_blocks_available) {
-        segment_t* seg = segment_create(2u);
+        segment_t* seg = segment_create(2u, NULL);
         seg->blockmap[0] = 0;
         void* obj = segment_alloc(seg);
         CHECK(obj == NULL);

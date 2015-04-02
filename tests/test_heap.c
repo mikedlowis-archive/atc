@@ -23,14 +23,14 @@ TEST_SUITE(Heap) {
 
     TEST(Verify_Allocate_should_allocate_a_new_segment_if_the_current_segment_is_full) {
         heap_t* heap = heap_create();
-        segnode_t* prev_seg_node;
+        segment_t* prev;
         CHECK(NULL != heap_allocate(heap, 1));
         CHECK(heap->heaps[0] != NULL);
-        prev_seg_node = heap->heaps[0];
-        prev_seg_node->segment->blockmap[0] = 0;
+        prev = heap->heaps[0];
+        prev->blockmap[0] = 0;
         CHECK(NULL != heap_allocate(heap, 1));
-        CHECK(heap->heaps[0] != prev_seg_node);
-        CHECK(heap->heaps[0]->next == prev_seg_node);
+        CHECK(heap->heaps[0] != prev);
+        CHECK(heap->heaps[0]->next == prev);
         heap_destroy(heap);
     }
 
