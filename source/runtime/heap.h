@@ -14,6 +14,13 @@
 #define HEAP_INDEX_OFFSET (MIN_NUM_SLOTS)
 
 #define NUM_HEAP_STACKS (MAX_NUM_SLOTS)
+/*
+
+/\__/\
+| . . |
+\____/
+
+*/
 
 typedef struct block_t {
     struct block_t* next;
