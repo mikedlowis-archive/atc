@@ -14,13 +14,6 @@
 #define HEAP_INDEX_OFFSET (MIN_NUM_SLOTS)
 
 #define NUM_HEAP_STACKS (MAX_NUM_SLOTS)
-/*
-
-/\__/\
-| . . |
-\____/
-
-*/
 
 typedef struct block_t {
     struct block_t* next;
@@ -37,5 +30,11 @@ heap_t* heap_create(void);
 void heap_destroy(heap_t* heap);
 
 void* heap_allocate(heap_t* heap, uintptr_t num_slots);
+
+void heap_start_collection(heap_t* heap);
+
+void heap_finish_collection(heap_t* heap);
+
+void* heap_find_and_mark(heap_t* heap, uintptr_t* addr);
 
 #endif /* HEAP_H */

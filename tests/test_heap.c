@@ -1,6 +1,7 @@
 #include "atf.h"
 #include "heap.h"
 
+#include "gc.h"
 TEST_SUITE(Heap) {
     /* Verify: heap_create
      *************************************************************************/
@@ -10,6 +11,7 @@ TEST_SUITE(Heap) {
         CHECK(NULL != heap_allocate(heap, 64));
         CHECK(NULL != heap_allocate(heap, 65));
         heap_destroy(heap);
+        gc_collect();
     }
 
     /* Verify: heap_alloc

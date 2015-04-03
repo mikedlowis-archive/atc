@@ -57,3 +57,20 @@ void* heap_allocate(heap_t* heap, uintptr_t num_slots)
     return obj;
 }
 
+void heap_start_collection(heap_t* heap)
+{
+    (void)heap;
+}
+
+void heap_finish_collection(heap_t* heap)
+{
+    (void)heap;
+}
+
+void* heap_find_and_mark(heap_t* heap, uintptr_t* addr)
+{
+    (void)heap;
+    (void)addr;
+    return NULL;
+}
+

@@ -1,23 +1,47 @@
 #include "gc.h"
 #include "heap.h"
+#include <assert.h>
+#include <stdlib.h>
 
 typedef struct {
     uint64_t objmap;
     uint8_t data[];
 } obj_t;
 
-static heap_t* heap = NULL;
+typedef struct root_t {
+    struct root_t* next;
+    void* address;
+    size_t size;
+} root_t;
 
-void gc_init(void* stack_bottom)
+static heap_t* Heap = NULL;
+static uintptr_t* Stack_Bottom = NULL;
+static root_t* Roots = NULL;
+
+void gc_init(uintptr_t* stack_bottom)
 {
-    (void)stack_bottom;
-    heap = heap_create();
+    Stack_Bottom = stack_bottom;
+    Heap = heap_create();
+}
+
+void gc_shutdown(void)
+{
+    heap_destroy(Heap);
+}
+
+void gc_add_root(void* address, size_t size)
+{
+    root_t* root = (root_t*)malloc(sizeof(root_t));
+    root->address = address;
+    root->size = size;
+    root->next = Roots;
+    Roots = root;
 }
 
 void* gc_object(uint64_t objmap, size_t num_slots)
 {
     (void)objmap;
-    return heap_allocate(heap, num_slots+1);
+    return heap_allocate(Heap, num_slots+1);
 }
 
 void* gc_allocate(size_t size)
@@ -25,15 +49,46 @@ void* gc_allocate(size_t size)
     size_t slot_sz   = sizeof(uintptr_t);
     size_t remainder = size % slot_sz;
     size_t num_slots = (size / slot_sz) + ((remainder == 0) ? 0 : (slot_sz - remainder));
-    return heap_allocate(heap, num_slots + 1);
+    return heap_allocate(Heap, num_slots + 1);
+}
+
+static void gc_scan_object(void* object) {
+    (void)object;
+}
+
+static void gc_scan_region(uintptr_t* start, uintptr_t* stop) {
+    for (; start < stop; start++) {
+        obj_t* obj = (obj_t*)heap_find_and_mark(Heap, start);
+        if (NULL != obj)
+            gc_scan_object(obj);
+    }
+}
+
+static void gc_scan_stack(void) {
+    /* Setup pointers to the stack top and bottom */
+    uintptr_t* stack_bot = Stack_Bottom;
+    uintptr_t* stack_top = (uintptr_t*)&stack_top;
+    /* Make sure we swap them in the event the stack grows downward */
+    if (stack_bot > stack_top) {
+        uintptr_t* temp = stack_top;
+        stack_top = stack_bot;
+        stack_bot = temp;
+    }
+    /* Scan the stack and mark any live objects */
+    gc_scan_region(stack_bot, stack_top);
+}
+
+static void gc_scan_roots(void) {
+    root_t* root = Roots;
+    for (; root != NULL; root = root->next)
+        gc_scan_region(root->address, root->address + (root->size / sizeof(uintptr_t)));
 }
 
 void gc_collect(void)
 {
+    heap_start_collection(Heap);
+    gc_scan_stack();
+    gc_scan_roots();
+    gc_scan_object(NULL);
+    heap_finish_collection(Heap);
 }
-
-void gc_shutdown(void)
-{
-    heap_destroy(heap);
-}
-
