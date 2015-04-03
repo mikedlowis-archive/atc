@@ -60,7 +60,7 @@ static void gc_scan_object(void* object) {
 
 static void gc_scan_region(uintptr_t* start, uintptr_t* stop) {
     for (; start < stop; start++) {
-        obj_t* obj = (obj_t*)heap_find_and_mark(Heap, start);
+        obj_t* obj = (obj_t*)heap_find_and_mark(Heap, *start);
         if (NULL != obj)
             gc_scan_object(obj);
     }
@@ -92,3 +92,4 @@ void gc_collect(void)
     gc_scan_object(NULL);
     heap_finish_collection(Heap);
 }
+

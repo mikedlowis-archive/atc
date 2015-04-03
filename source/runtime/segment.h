@@ -30,4 +30,6 @@ void* segment_alloc(segment_t* seg);
 
 void segment_clear_map(segment_t* seg);
 
+void* segment_find_and_mark(segment_t* seg, uintptr_t addr);
+
 #endif /* SEGMENT_H */

@@ -62,3 +62,9 @@ void segment_clear_map(segment_t* seg)
     memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
 }
 
+void* segment_find_and_mark(segment_t* seg, uintptr_t addr) {
+    (void)seg;
+    (void)addr;
+    return NULL;
+}
+

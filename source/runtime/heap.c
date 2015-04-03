@@ -44,8 +44,10 @@ static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
 
 static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
 {
-    block_t* blk = (block_t*)malloc(sizeof(block_t) + (num_slots * sizeof(uintptr_t)));
+    uintptr_t size = (num_slots * sizeof(uintptr_t));
+    block_t* blk = (block_t*)malloc(sizeof(block_t) + size);
     blk->next = heap->blocks;
+    blk->size = size;
     heap->blocks = blk;
     return (&blk->data[0]);
 }
@@ -77,10 +79,41 @@ void heap_finish_collection(heap_t* heap)
     destroy_large_blocks(heap->greylist);
 }
 
-void* heap_find_and_mark(heap_t* heap, uintptr_t* addr)
+static void* subheap_find_and_mark(heap_t* heap, uintptr_t addr) {
+    void* obj = NULL;
+    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
+        for(segment_t* curr = heap->heaps[i]; curr != NULL; curr = curr->next) {
+            obj = segment_find_and_mark(heap->heaps[i], addr);
+            if (NULL != obj) {
+                i = NUM_HEAP_STACKS;
+                break;
+            }
+        }
+    }
+    return obj;
+}
+
+static void* block_find_and_mark(heap_t* heap, uintptr_t addr) {
+    void* obj = NULL;
+    block_t* prev = NULL;
+    block_t* curr = heap->greylist;
+    while (curr != NULL) {
+        uintptr_t start = (uintptr_t)&(curr->data[0]);
+        uintptr_t end   = start + curr->size;
+        if ((start <= addr) && (addr <= end)) {
+
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+    return obj;
+}
+
+void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
 {
-    (void)heap;
-    (void)addr;
-    return NULL;
+    void* obj = subheap_find_and_mark(heap, addr);
+    if (NULL == obj)
+        obj = block_find_and_mark(heap, addr);
+    return obj;
 }
 

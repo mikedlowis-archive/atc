@@ -17,6 +17,7 @@
 
 typedef struct block_t {
     struct block_t* next;
+    uintptr_t size;
     uintptr_t data[];
 } block_t;
 
@@ -36,6 +37,6 @@ void heap_start_collection(heap_t* heap);
 
 void heap_finish_collection(heap_t* heap);
 
-void* heap_find_and_mark(heap_t* heap, uintptr_t* addr);
+void* heap_find_and_mark(heap_t* heap, uintptr_t addr);
 
 #endif /* HEAP_H */
