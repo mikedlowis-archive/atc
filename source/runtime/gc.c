@@ -70,14 +70,11 @@ static void gc_scan_stack(void) {
     /* Setup pointers to the stack top and bottom */
     uintptr_t* stack_bot = Stack_Bottom;
     uintptr_t* stack_top = (uintptr_t*)&stack_top;
-    /* Make sure we swap them in the event the stack grows downward */
-    if (stack_bot > stack_top) {
-        uintptr_t* temp = stack_top;
-        stack_top = stack_bot;
-        stack_bot = temp;
-    }
     /* Scan the stack and mark any live objects */
-    gc_scan_region(stack_bot, stack_top);
+    if (stack_bot <= stack_top)
+        gc_scan_region(stack_bot, stack_top);
+    else
+        gc_scan_region(stack_top, stack_bot);
 }
 
 static void gc_scan_roots(void) {
