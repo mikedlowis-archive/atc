@@ -23,6 +23,7 @@ typedef struct block_t {
 typedef struct {
     segment_t* heaps[NUM_HEAP_STACKS];
     block_t* blocks;
+    block_t* greylist;
 } heap_t;
 
 heap_t* heap_create(void);

@@ -10,16 +10,20 @@ heap_t* heap_create(void)
     return (heap_t*)calloc(1u, sizeof(heap_t));;
 }
 
-void heap_destroy(heap_t* heap)
-{
-    unsigned int i;
-    block_t* current = heap->blocks;
-    /* Free all the large blocks */
+static void destroy_large_blocks(block_t* current) {
     while (NULL != current) {
         block_t* deadite = current;
         current = current->next;
         free(deadite);
     }
+}
+
+void heap_destroy(heap_t* heap)
+{
+    unsigned int i;
+    /* Free all the large blocks */
+    destroy_large_blocks(heap->blocks);
+    destroy_large_blocks(heap->greylist);
     /* Free all of the small block segments */
     for (i = 0; i < NUM_HEAP_STACKS; i++) {
         segment_destroy(heap->heaps[i]);
@@ -59,12 +63,18 @@ void* heap_allocate(heap_t* heap, uintptr_t num_slots)
 
 void heap_start_collection(heap_t* heap)
 {
-    (void)heap;
+    heap->greylist = heap->blocks;
+    heap->blocks = NULL;
+    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
+        for(segment_t* curr = heap->heaps[i]; curr != NULL; curr = curr->next) {
+            segment_clear_map(heap->heaps[i]);
+        }
+    }
 }
 
 void heap_finish_collection(heap_t* heap)
 {
-    (void)heap;
+    destroy_large_blocks(heap->greylist);
 }
 
 void* heap_find_and_mark(heap_t* heap, uintptr_t* addr)

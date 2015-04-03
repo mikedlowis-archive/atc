@@ -28,4 +28,6 @@ bool segment_full(segment_t* seg);
 
 void* segment_alloc(segment_t* seg);
 
+void segment_clear_map(segment_t* seg);
+
 #endif /* SEGMENT_H */

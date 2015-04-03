@@ -21,7 +21,7 @@ segment_t* segment_create(uintptr_t num_slots, segment_t* next)
     seg->next = next;
     seg->blocksize = num_slots;
     seg->end = (seg->start + (num_slots * NUM_BLOCKS));
-    memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
+    segment_clear_map(seg);
     return seg;
 }
 
@@ -56,3 +56,9 @@ void* segment_alloc(segment_t* seg) {
     }
     return obj;
 }
+
+void segment_clear_map(segment_t* seg)
+{
+    memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
+}
+

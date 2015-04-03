@@ -2,6 +2,7 @@
 #include "heap.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <setjmp.h>
 
 typedef struct {
     uint64_t objmap;
@@ -40,15 +41,16 @@ void gc_add_root(void* address, size_t size)
 
 void* gc_object(uint64_t objmap, size_t num_slots)
 {
-    (void)objmap;
-    return heap_allocate(Heap, num_slots+1);
+    obj_t* obj = heap_allocate(Heap, num_slots+1);
+    obj->objmap = objmap;
+    obj++;
+    return obj;
 }
 
 void* gc_allocate(size_t size)
 {
     size_t slot_sz   = sizeof(uintptr_t);
-    size_t remainder = size % slot_sz;
-    size_t num_slots = (size / slot_sz) + ((remainder == 0) ? 0 : (slot_sz - remainder));
+    size_t num_slots = (size + slot_sz - 1) / slot_sz;
     return heap_allocate(Heap, num_slots + 1);
 }
 
@@ -79,14 +81,15 @@ static void gc_scan_stack(void) {
 }
 
 static void gc_scan_roots(void) {
-    root_t* root = Roots;
-    for (; root != NULL; root = root->next)
+    for (root_t* root = Roots; root != NULL; root = root->next)
         gc_scan_region(root->address, root->address + (root->size / sizeof(uintptr_t)));
 }
 
 void gc_collect(void)
 {
+    jmp_buf registers;
     heap_start_collection(Heap);
+    (void)setjmp(registers); // Save off register sets
     gc_scan_stack();
     gc_scan_roots();
     gc_scan_object(NULL);
