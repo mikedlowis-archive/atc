@@ -1,6 +1,8 @@
 #include "atf.h"
 #include "segment.h"
 
+#include <stdio.h>
+
 TEST_SUITE(Segment) {
     /* Verify: segment_create
      *************************************************************************/
@@ -72,6 +74,45 @@ TEST_SUITE(Segment) {
         seg->blockmap[0] = 0;
         void* obj = segment_alloc(seg);
         CHECK(obj == NULL);
+        segment_destroy(seg);
+    }
+
+    /* Verify: segment_find_and_mark
+     *************************************************************************/
+    TEST(Verify_find_and_mark_should_find_and_mark_a_block) {
+        segment_t* seg = segment_create(2u, NULL);
+        CHECK(&seg->start[2] == segment_find_and_mark(seg, (uintptr_t)&seg->start[2]));
+        segment_destroy(seg);
+    }
+
+    TEST(Verify_find_and_mark_should_find_and_mark_first_block) {
+        segment_t* seg = segment_create(2u, NULL);
+        CHECK(&seg->start[0] == segment_find_and_mark(seg, (uintptr_t)&seg->start[0]));
+        segment_destroy(seg);
+    }
+
+    TEST(Verify_find_and_mark_should_find_and_mark_last_block) {
+        segment_t* seg = segment_create(2u, NULL);
+        CHECK(&seg->start[510] == segment_find_and_mark(seg, ((uintptr_t)&seg->start[511]) + (sizeof(uintptr_t) - 1) ));
+        segment_destroy(seg);
+    }
+
+    TEST(Verify_find_and_mark_should_return_null_when_block_is_already_in_use) {
+        segment_t* seg = segment_create(2u, NULL);
+        seg->blockmap[1] &= ~(2);
+        CHECK(NULL == segment_find_and_mark(seg, (uintptr_t)&seg->start[2]));
+        segment_destroy(seg);
+    }
+
+    TEST(Verify_find_and_mark_should_return_null_when_address_is_lower_than_segment_range) {
+        segment_t* seg = segment_create(2u, NULL);
+        CHECK(NULL == segment_find_and_mark(seg, (uintptr_t)&seg->start[-1]));
+        segment_destroy(seg);
+    }
+
+    TEST(Verify_find_and_mark_should_return_null_when_address_is_greater_than_segment_range) {
+        segment_t* seg = segment_create(2u, NULL);
+        CHECK(NULL == segment_find_and_mark(seg, (uintptr_t)&seg->start[512]));
         segment_destroy(seg);
     }
 }

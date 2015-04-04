@@ -39,6 +39,21 @@ bool segment_full(segment_t* seg) {
     return (0u == seg->blockmap[0]);
 }
 
+static void* alloc_block(segment_t* seg, uintptr_t root_idx, uintptr_t submap_idx) {
+    void* object = NULL;
+    uintptr_t submap_mask = (1u << submap_idx);
+    if (0u != (seg->blockmap[root_idx + 1] & submap_mask)) {
+        /* Get the object's pointer */
+        uintptr_t offset = seg->blocksize * ((root_idx * 16u) + submap_idx);
+        object = seg->start + offset;
+        /* Mark it as allocated */
+        seg->blockmap[root_idx + 1] &= ~(submap_mask);
+        if (0u == seg->blockmap[root_idx + 1])
+            seg->blockmap[0] &= ~(1u << root_idx);
+    }
+    return object;
+}
+
 void* segment_alloc(segment_t* seg) {
     void* obj = NULL;
     /* Check if the segment has any free blocks */
@@ -46,13 +61,8 @@ void* segment_alloc(segment_t* seg) {
         /* Find the free block */
         uint8_t root_idx   = get_free_index(seg->blockmap[0]);
         uint8_t submap_idx = get_free_index(seg->blockmap[root_idx + 1]);
-        /* Calculate it's address */
-        uintptr_t offset = seg->blocksize * ((root_idx * 16u) + submap_idx);
-        obj = seg->start + offset;
-        /* Mark it allocated */
-        seg->blockmap[root_idx + 1] &= ~(1u << submap_idx);
-        if (0u == seg->blockmap[root_idx + 1])
-            seg->blockmap[0] &= ~(1u << root_idx);
+        /* Allocate and return its address */
+        obj = alloc_block(seg, root_idx, submap_idx);
     }
     return obj;
 }
@@ -63,8 +73,15 @@ void segment_clear_map(segment_t* seg)
 }
 
 void* segment_find_and_mark(segment_t* seg, uintptr_t addr) {
-    (void)seg;
-    (void)addr;
-    return NULL;
+    void* obj = NULL;
+    uintptr_t start = (uintptr_t)&(seg->start[0]);
+    uintptr_t end   = (uintptr_t)seg->end;
+    if ((start <= addr) && (addr < end)) {
+        uintptr_t block_num  = (addr - start) / (seg->blocksize * sizeof(uintptr_t));
+        uintptr_t root_idx   = block_num / 16u;
+        uintptr_t submap_idx = block_num % 16u;
+        obj = alloc_block(seg, root_idx, submap_idx);
+    }
+    return obj;
 }
 
