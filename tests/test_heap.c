@@ -11,7 +11,6 @@ TEST_SUITE(Heap) {
         CHECK(NULL != heap_allocate(heap, 64));
         CHECK(NULL != heap_allocate(heap, 65));
         heap_destroy(heap);
-        gc_collect();
     }
 
     /* Verify: heap_alloc

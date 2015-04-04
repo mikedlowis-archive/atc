@@ -77,6 +77,7 @@ void heap_start_collection(heap_t* heap)
 void heap_finish_collection(heap_t* heap)
 {
     destroy_large_blocks(heap->greylist);
+    heap->greylist = NULL;
 }
 
 static void* subheap_find_and_mark(heap_t* heap, uintptr_t addr) {
@@ -100,8 +101,16 @@ static void* block_find_and_mark(heap_t* heap, uintptr_t addr) {
     while (curr != NULL) {
         uintptr_t start = (uintptr_t)&(curr->data[0]);
         uintptr_t end   = start + curr->size;
-        if ((start <= addr) && (addr <= end)) {
-
+        if ((start <= addr) && (addr < end)) {
+            /* Remove it from the grey list */
+            if (prev == NULL)
+                heap->greylist = curr->next;
+            else
+                prev->next = curr->next;
+            /* Add it to the in-use list and break */
+            curr->next = heap->blocks;
+            heap->blocks = curr->next;
+            break;
         }
         prev = curr;
         curr = curr->next;
