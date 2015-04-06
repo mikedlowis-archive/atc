@@ -11,7 +11,7 @@ typedef struct {
 
 typedef struct root_t {
     struct root_t* next;
-    void* address;
+    uintptr_t* address;
     size_t size;
 } root_t;
 

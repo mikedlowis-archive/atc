@@ -14,7 +14,7 @@ base_env = BuildEnv.new do |env|
   # Setup include paths
   env['CPPPATH'] += Dir['source/**/', 'modules/atf/source/']
   # Turn on all warnings and treat them as errors, Also C99 strict mode
-  env['CFLAGS'] += ['-Wall', '-Wextra', '-Werror']
+  env['CFLAGS'] += ['--std=c99', '-pedantic', '-Wall', '-Wextra', '-Werror']
   # Enable debug symbols for test
   if Opts[:profile].include? "test"
     env['CFLAGS'] += ['-g', '-O0']
