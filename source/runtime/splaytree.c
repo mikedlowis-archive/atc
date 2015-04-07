@@ -12,10 +12,12 @@ splaytree_t* splaytree_create(void)
     return splaytree;
 }
 
-static void destroy_tree(node_t* node) {
+static void destroy_tree(node_t* node)
+{
     if (NULL != node) {
         destroy_tree(node->left);
         destroy_tree(node->right);
+        free(node);
     }
 }
 
@@ -25,7 +27,8 @@ void splaytree_destroy(splaytree_t* tree)
     free(tree);
 }
 
-static node_t* create_node(node_type_t tag, void* value) {
+static node_t* create_node(node_type_t tag, void* value)
+{
     node_t* node = (node_t*)malloc(sizeof(node_t*));
     node->tag = tag;
     node->ptr.raw = value;
@@ -34,21 +37,24 @@ static node_t* create_node(node_type_t tag, void* value) {
     return node;
 }
 
-static uintptr_t get_start_addr(node_t* curr) {
+static uintptr_t get_start_addr(node_t* curr)
+{
     if (curr->tag == SEGMENT)
         return (uintptr_t)(curr->ptr.segment->start);
     else
         return (uintptr_t)(curr->ptr.block->data);
 }
 
-static uintptr_t get_end_addr(node_t* curr) {
+static uintptr_t get_end_addr(node_t* curr)
+{
     if (curr->tag == SEGMENT)
         return (uintptr_t)(curr->ptr.segment->end);
     else
         return (uintptr_t)(curr->ptr.block->data + curr->ptr.block->size);
 }
 
-static node_t** next_node(node_t* curr, uintptr_t address) {
+static node_t** next_node(node_t* curr, uintptr_t address)
+{
     uintptr_t curr_address = get_start_addr(curr);
     if (address < curr_address)
         return &(curr->left);
