@@ -12,18 +12,18 @@ splaytree_t* splaytree_create(void)
     return splaytree;
 }
 
-static void destroy_tree(node_t* node)
+static void destroy_node(node_t* node)
 {
     if (NULL != node) {
-        destroy_tree(node->left);
-        destroy_tree(node->right);
+        destroy_node(node->left);
+        destroy_node(node->right);
         free(node);
     }
 }
 
 void splaytree_destroy(splaytree_t* tree)
 {
-    destroy_tree(tree->root);
+    destroy_node(tree->root);
     free(tree);
 }
 
