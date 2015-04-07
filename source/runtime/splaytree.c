@@ -85,17 +85,18 @@ void splaytree_insert(splaytree_t* tree, node_type_t tag, void* value)
 node_type_t splaytree_lookup(splaytree_t* tree, uintptr_t address, void** value)
 {
     node_type_t tag = NONE;
-    node_t** current = &(tree->root);
-    while(*current != NULL) {
-        uintptr_t start = get_start_addr(*current);
-        uintptr_t end   = get_end_addr(*current);
+    node_t* current = tree->root;
+    while(current != NULL) {
+        uintptr_t start = get_start_addr(current);
+        uintptr_t end   = get_end_addr(current);
         if ((start <= address) && (address < end)) {
-            *value = (*current)->ptr.raw;
+            tag = current->tag;
+            *value = current->ptr.raw;
             break;
         } else if (start < address) {
-            current = &((*current)->left);
+            current = current->left;
         } else {
-            current = &((*current)->right);
+            current = current->right;
         }
     }
     return tag;
