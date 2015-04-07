@@ -90,41 +90,47 @@ void heap_finish_collection(heap_t* heap)
 }
 
 static void* subheap_find_and_mark(heap_t* heap, uintptr_t addr) {
-    void* obj = NULL;
-    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
-        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
-            obj = segment_find_and_mark(heap->heaps[i].available, addr);
-            if (NULL != obj) {
-                i = NUM_HEAP_STACKS;
-                break;
-            }
-        }
-    }
-    return obj;
+//    void* obj = NULL;
+//    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
+//        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
+//            obj = segment_find_and_mark(heap->heaps[i].available, addr);
+//            if (NULL != obj) {
+//                i = NUM_HEAP_STACKS;
+//                break;
+//            }
+//        }
+//    }
+//    return obj;
+    (void)heap;
+    (void)addr;
+    return NULL;
 }
 
 static void* block_find_and_mark(heap_t* heap, uintptr_t addr) {
-    void* obj = NULL;
-    block_t* prev = NULL;
-    block_t* curr = heap->greylist;
-    while (curr != NULL) {
-        uintptr_t start = (uintptr_t)&(curr->data[0]);
-        uintptr_t end   = start + curr->size;
-        if ((start <= addr) && (addr < end)) {
-            /* Remove it from the grey list */
-            if (prev == NULL)
-                heap->greylist = curr->next;
-            else
-                prev->next = curr->next;
-            /* Add it to the in-use list and break */
-            curr->next = heap->blocks;
-            heap->blocks = curr->next;
-            break;
-        }
-        prev = curr;
-        curr = curr->next;
-    }
-    return obj;
+//    void* obj = NULL;
+//    block_t* prev = NULL;
+//    block_t* curr = heap->greylist;
+//    while (curr != NULL) {
+//        uintptr_t start = (uintptr_t)&(curr->data[0]);
+//        uintptr_t end   = start + curr->size;
+//        if ((start <= addr) && (addr < end)) {
+//            /* Remove it from the grey list */
+//            if (prev == NULL)
+//                heap->greylist = curr->next;
+//            else
+//                prev->next = curr->next;
+//            /* Add it to the in-use list and break */
+//            curr->next = heap->blocks;
+//            heap->blocks = curr->next;
+//            break;
+//        }
+//        prev = curr;
+//        curr = curr->next;
+//    }
+//    return obj;
+    (void)heap;
+    (void)addr;
+    return NULL;
 }
 
 void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
