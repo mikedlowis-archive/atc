@@ -26,7 +26,7 @@ void heap_destroy(heap_t* heap)
     destroy_large_blocks(heap->greylist);
     /* Free all of the small block segments */
     for (i = 0; i < NUM_HEAP_STACKS; i++) {
-        segment_destroy(heap->heaps[i]);
+        segment_destroy(heap->heaps[i].available);
     }
     /* Free the heap itself */
     free(heap);
@@ -34,12 +34,21 @@ void heap_destroy(heap_t* heap)
 
 static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
 {
+    void* object;
     uintptr_t index = (num_slots >= MIN_NUM_SLOTS) ? (num_slots - HEAP_INDEX_OFFSET) : 0;
-    segment_t* current = heap->heaps[index];
-    if ((NULL == current) || segment_full(current)) {
-        heap->heaps[index] = segment_create(num_slots, current);
+    /* If we dont have any available segments, allocate a new one */
+    if (NULL == heap->heaps[index].available)
+        heap->heaps[index].available = segment_create(num_slots, heap->heaps[index].available);
+    /* Allocate the object */
+    object = segment_alloc(heap->heaps[index].available);
+    /* If we filled it up then move it to the full list */
+    if (segment_full(heap->heaps[index].available)) {
+        segment_t* current = heap->heaps[index].available;
+        heap->heaps[index].available = heap->heaps[index].available->next;
+        current->next = heap->heaps[index].full;
+        heap->heaps[index].full = current;
     }
-    return segment_alloc(heap->heaps[index]);
+    return object;
 }
 
 static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
@@ -68,8 +77,8 @@ void heap_start_collection(heap_t* heap)
     heap->greylist = heap->blocks;
     heap->blocks = NULL;
     for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
-        for(segment_t* curr = heap->heaps[i]; curr != NULL; curr = curr->next) {
-            segment_clear_map(heap->heaps[i]);
+        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
+            segment_clear_map(heap->heaps[i].available);
         }
     }
 }
@@ -83,8 +92,8 @@ void heap_finish_collection(heap_t* heap)
 static void* subheap_find_and_mark(heap_t* heap, uintptr_t addr) {
     void* obj = NULL;
     for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
-        for(segment_t* curr = heap->heaps[i]; curr != NULL; curr = curr->next) {
-            obj = segment_find_and_mark(heap->heaps[i], addr);
+        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
+            obj = segment_find_and_mark(heap->heaps[i].available, addr);
             if (NULL != obj) {
                 i = NUM_HEAP_STACKS;
                 break;

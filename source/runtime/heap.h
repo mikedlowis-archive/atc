@@ -22,7 +22,10 @@ typedef struct block_t {
 } block_t;
 
 typedef struct {
-    segment_t* heaps[NUM_HEAP_STACKS];
+    struct {
+        segment_t* available;
+        segment_t* full;
+    } heaps[NUM_HEAP_STACKS];
     block_t* blocks;
     block_t* greylist;
 } heap_t;

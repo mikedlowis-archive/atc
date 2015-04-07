@@ -18,27 +18,26 @@ TEST_SUITE(Heap) {
     TEST(Verify_Allocate_should_allocate_a_new_segment_if_the_subheap_is_empty) {
         heap_t* heap = heap_create();
         CHECK(NULL != heap_allocate(heap, 1));
-        CHECK(heap->heaps[0] != NULL);
+        CHECK(heap->heaps[0].available != NULL);
         heap_destroy(heap);
     }
 
     TEST(Verify_Allocate_should_allocate_a_new_segment_if_the_current_segment_is_full) {
         heap_t* heap = heap_create();
-        segment_t* prev;
         CHECK(NULL != heap_allocate(heap, 1));
-        CHECK(heap->heaps[0] != NULL);
-        prev = heap->heaps[0];
-        prev->blockmap[0] = 0;
+        heap->heaps[0].available->blockmap[0] = 1 << ((sizeof(uint16_t) * 8) - 1);
+        heap->heaps[0].available->blockmap[16] = 1 << ((sizeof(uint16_t) * 8) - 1);
         CHECK(NULL != heap_allocate(heap, 1));
-        CHECK(heap->heaps[0] != prev);
-        CHECK(heap->heaps[0]->next == prev);
+        CHECK(heap->heaps[0].available == NULL);
+        CHECK(heap->heaps[0].full != NULL);
+        CHECK(heap->heaps[0].full->next == NULL);
         heap_destroy(heap);
     }
 
     TEST(Verify_Allocate_should_allocate_the_minimum_size_if_num_slots_is_less_than_the_minimum) {
         heap_t* heap = heap_create();
         CHECK(NULL != heap_allocate(heap, 0));
-        CHECK(heap->heaps[0] != NULL);
+        CHECK(heap->heaps[0].available != NULL);
         heap_destroy(heap);
     }
 
