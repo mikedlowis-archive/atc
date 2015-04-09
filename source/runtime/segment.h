@@ -26,6 +26,8 @@ void segment_destroy(segment_t* seg);
 
 bool segment_full(segment_t* seg);
 
+bool segment_empty(segment_t* seg);
+
 void* segment_alloc(segment_t* seg);
 
 void segment_clear_map(segment_t* seg);

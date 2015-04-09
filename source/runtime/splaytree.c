@@ -22,6 +22,15 @@ static node_t** next_node(splaytree_t* tree, node_t* curr, uintptr_t address)
         return &(curr->right);
 }
 
+static void destroy_node(splaytree_t* tree, node_t* node) {
+    if (NULL != node) {
+        destroy_node(tree, node->left);
+        destroy_node(tree, node->right);
+        //tree->destroy(node->value);
+        free(node);
+    }
+}
+
 splaytree_t* splaytree_create(del_fn_t delfn, cmp_fn_t cmp_fn)
 {
     splaytree_t* tree = (splaytree_t*)malloc(sizeof(splaytree_t));
@@ -33,7 +42,10 @@ splaytree_t* splaytree_create(del_fn_t delfn, cmp_fn_t cmp_fn)
 
 void splaytree_destroy(splaytree_t* tree)
 {
-    (void)tree;
+    if (NULL != tree) {
+        destroy_node(tree, tree->root);
+        free(tree);
+    }
 }
 
 void splaytree_insert(splaytree_t* tree, uintptr_t key, void* value)
@@ -54,7 +66,7 @@ void* splaytree_lookup(splaytree_t* tree, uintptr_t key)
 {
     node_t* current = tree->root;
     while (current != NULL) {
-        int cmp_val = tree->compare(key, current);
+        int cmp_val = tree->compare(key, current->value);
         if (cmp_val == 0)
             return current->value;
         else if (cmp_val < 0)

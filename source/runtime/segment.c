@@ -39,6 +39,10 @@ bool segment_full(segment_t* seg) {
     return (0u == seg->blockmap[0]);
 }
 
+bool segment_empty(segment_t* seg) {
+    return (UINT16_MAX == seg->blockmap[0]);
+}
+
 static void* alloc_block(segment_t* seg, uintptr_t root_idx, uintptr_t submap_idx) {
     void* object = NULL;
     uintptr_t submap_mask = (1u << submap_idx);
