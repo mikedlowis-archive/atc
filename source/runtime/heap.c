@@ -5,25 +5,46 @@
 #include "heap.h"
 #include <stdlib.h>
 
-heap_t* heap_create(void)
+static int range_compare(uintptr_t val, uintptr_t start, uintptr_t end)
 {
-    return (heap_t*)calloc(1u, sizeof(heap_t));;
+    if (val < start)
+        return -1;
+    else if (val >= end)
+        return 1;
+    else
+        return 0;
 }
 
-static void destroy_large_blocks(block_t* current) {
-    while (NULL != current) {
-        block_t* deadite = current;
-        current = current->next;
-        free(deadite);
-    }
+static int segment_compare(uintptr_t key, segment_t* seg)
+{
+    uintptr_t start = (uintptr_t)(seg->start);
+    uintptr_t end   = (uintptr_t)(seg->end);
+    return range_compare(key, start, end);
+}
+
+static int block_compare(uintptr_t key, block_t* block)
+{
+    uintptr_t start = (uintptr_t)(block->data);
+    uintptr_t end   = (uintptr_t)(start + block->size);
+    return range_compare(key, start, end);
+}
+
+heap_t* heap_create(void)
+{
+    heap_t* heap = (heap_t*)calloc(1u, sizeof(heap_t));
+    heap->segments = splaytree_create((del_fn_t)segment_destroy, (cmp_fn_t)segment_compare);
+    heap->blocks   = splaytree_create((del_fn_t)free, (cmp_fn_t)block_compare);
+    heap->greylist = NULL;
+    return heap;
 }
 
 void heap_destroy(heap_t* heap)
 {
     unsigned int i;
     /* Free all the large blocks */
-    destroy_large_blocks(heap->blocks);
-    destroy_large_blocks(heap->greylist);
+    splaytree_destroy(heap->segments);
+    splaytree_destroy(heap->blocks);
+    splaytree_destroy(heap->greylist);
     /* Free all of the small block segments */
     for (i = 0; i < NUM_HEAP_STACKS; i++) {
         segment_destroy(heap->heaps[i].available);
@@ -37,8 +58,10 @@ static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
     void* object;
     uintptr_t index = (num_slots >= MIN_NUM_SLOTS) ? (num_slots - HEAP_INDEX_OFFSET) : 0;
     /* If we dont have any available segments, allocate a new one */
-    if (NULL == heap->heaps[index].available)
+    if (NULL == heap->heaps[index].available) {
         heap->heaps[index].available = segment_create(num_slots, heap->heaps[index].available);
+        splaytree_insert(heap->segments, (uintptr_t)&(heap->heaps[index].available->start[0]), heap->heaps[index].available);
+    }
     /* Allocate the object */
     object = segment_alloc(heap->heaps[index].available);
     /* If we filled it up then move it to the full list */
@@ -55,9 +78,8 @@ static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
 {
     uintptr_t size = (num_slots * sizeof(uintptr_t));
     block_t* blk = (block_t*)malloc(sizeof(block_t) + size);
-    blk->next = heap->blocks;
     blk->size = size;
-    heap->blocks = blk;
+    splaytree_insert(heap->blocks, (uintptr_t)&blk->data[0], blk);
     return (&blk->data[0]);
 }
 
@@ -75,69 +97,27 @@ void* heap_allocate(heap_t* heap, uintptr_t num_slots)
 void heap_start_collection(heap_t* heap)
 {
     heap->greylist = heap->blocks;
-    heap->blocks = NULL;
-    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
-        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
-            segment_clear_map(heap->heaps[i].available);
-        }
-    }
+    heap->blocks   = splaytree_create((del_fn_t)free, (cmp_fn_t)block_compare);
 }
 
 void heap_finish_collection(heap_t* heap)
 {
-    destroy_large_blocks(heap->greylist);
-    heap->greylist = NULL;
-}
-
-static void* subheap_find_and_mark(heap_t* heap, uintptr_t addr) {
-//    void* obj = NULL;
-//    for (uintptr_t i = 0; i < NUM_HEAP_STACKS; i++) {
-//        for(segment_t* curr = heap->heaps[i].available; curr != NULL; curr = curr->next) {
-//            obj = segment_find_and_mark(heap->heaps[i].available, addr);
-//            if (NULL != obj) {
-//                i = NUM_HEAP_STACKS;
-//                break;
-//            }
-//        }
-//    }
-//    return obj;
-    (void)heap;
-    (void)addr;
-    return NULL;
-}
-
-static void* block_find_and_mark(heap_t* heap, uintptr_t addr) {
-//    void* obj = NULL;
-//    block_t* prev = NULL;
-//    block_t* curr = heap->greylist;
-//    while (curr != NULL) {
-//        uintptr_t start = (uintptr_t)&(curr->data[0]);
-//        uintptr_t end   = start + curr->size;
-//        if ((start <= addr) && (addr < end)) {
-//            /* Remove it from the grey list */
-//            if (prev == NULL)
-//                heap->greylist = curr->next;
-//            else
-//                prev->next = curr->next;
-//            /* Add it to the in-use list and break */
-//            curr->next = heap->blocks;
-//            heap->blocks = curr->next;
-//            break;
-//        }
-//        prev = curr;
-//        curr = curr->next;
-//    }
-//    return obj;
-    (void)heap;
-    (void)addr;
-    return NULL;
+    splaytree_destroy(heap->greylist);
 }
 
 void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
 {
-    void* obj = subheap_find_and_mark(heap, addr);
-    if (NULL == obj)
-        obj = block_find_and_mark(heap, addr);
+    void* obj = NULL;
+    segment_t* seg = splaytree_lookup(heap->segments, addr);
+    if (NULL != seg) {
+        obj = segment_find_and_mark(seg, addr);
+    } else {
+        block_t* block = splaytree_delete(heap->greylist, addr);
+        if (NULL != block) {
+            splaytree_insert(heap->blocks, addr, block);
+            obj = &block->data[0];
+        }
+    }
     return obj;
 }
 

@@ -6,6 +6,7 @@
 #define HEAP_H
 
 #include "segment.h"
+#include "splaytree.h"
 
 #define MIN_NUM_SLOTS (1u)
 
@@ -16,7 +17,6 @@
 #define NUM_HEAP_STACKS (MAX_NUM_SLOTS)
 
 typedef struct block_t {
-    struct block_t* next;
     uintptr_t size;
     uintptr_t data[];
 } block_t;
@@ -26,8 +26,9 @@ typedef struct {
         segment_t* available;
         segment_t* full;
     } heaps[NUM_HEAP_STACKS];
-    block_t* blocks;
-    block_t* greylist;
+    splaytree_t* segments;
+    splaytree_t* blocks;
+    splaytree_t* greylist;
 } heap_t;
 
 heap_t* heap_create(void);
