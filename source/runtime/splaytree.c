@@ -4,6 +4,7 @@
 */
 #include "splaytree.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 static node_t* create_node(void* value)
 {
@@ -48,21 +49,62 @@ static node_t* rotate(node_t* node, direction_t direction){
     return pivot;
 }
 
+void print_tree(node_t* tree) {
+    if (tree) {
+        printf("(%lu ", (uintptr_t)tree->value);
+        if (tree->left) {
+            print_tree(tree->left);
+            printf(" ");
+        } else
+            printf("nil ");
+        if (tree->right)
+            print_tree(tree->right);
+        else
+            printf("nil");
+        printf(")");
+    }
+}
+
 static void splay(splaytree_t* tree, uintptr_t key) {
-    node_t* node = tree->root;
-    if (NULL != node) {
+    node_t  subroots = {0, 0, 0};
+    node_t* subleft  = &subroots;
+    node_t* subright = &subroots;
+    node_t* root     = tree->root;
+    if (NULL != root) {
         while (1) {
-            int cmp = tree->compare(key, node->value);
+            int cmp = tree->compare(key, root->value);
             if (cmp < 0) {
-                node = rotate(node, RIGHT);
+                if (NULL == root->left) break;
+                if (tree->compare(key, root->left->value) < 0) {
+                    root = rotate(root, RIGHT);
+                    if (NULL == root->left) break;
+                }
+                subright->left = root;
+                subright = root;
+                root = root->left;
             } else if (cmp > 0) {
-                node = rotate(node, LEFT);
+                if (NULL == root->right) break;
+                if (tree->compare(key, root->right->value) < 0) {
+                    root = rotate(root, LEFT);
+                    if (NULL == root->right) break;
+                }
+                subleft->right = root;
+                subleft = root;
+                root = root->right;
             } else {
                 break;
             }
         }
     }
-    tree->root = node;
+
+    /* assemble */
+    subleft->right = root->left;
+    subright->left = root->right;
+    root->left  = subroots.right;
+    root->right = subroots.left;
+
+    /* Set the root */
+    tree->root = root;
 }
 
 splaytree_t* splaytree_create(del_fn_t delfn, cmp_fn_t cmp_fn)
@@ -85,18 +127,40 @@ void splaytree_destroy(splaytree_t* tree)
 
 void splaytree_insert(splaytree_t* tree, uintptr_t key, void* value)
 {
-    /* Insert the item into the tree */
+    (void)next_node;
     if (tree->root == NULL) {
         tree->root = create_node(value);
     } else {
-        node_t** current = &(tree->root);
-        while(*current != NULL) {
-            current = next_node(tree, *current, key);
-        }
-        *current = create_node(value);
+        /* Splay the closest node in value to the root */
+        puts("before splay: ");
+        print_tree(tree->root);
+        puts("");
+        /* Splay the new node to the top of the tree */
+        splay(tree, key);
+        puts("after splay: ");
+        print_tree(tree->root);
+        puts("");
+
+        /* Compare the key to the new root */
+        int cmp = tree->compare(key, tree->root->value);
+        if (cmp < 0) {
+           node_t* newroot  = create_node(value);
+           printf("newroot1: %lu\n", (uintptr_t)newroot->value);
+           newroot->left    = tree->root->left;
+           newroot->right   = tree->root;
+           tree->root->left = NULL;
+           tree->root       = newroot;
+        } else if (cmp > 0) {
+           node_t* newroot   = create_node(value);
+           newroot->right    = tree->root->right;
+           newroot->left     = tree->root;
+           printf("newroot2: %lu\n", (uintptr_t)newroot->value);
+           tree->root->right = NULL;
+           printf("newroot2: %lu\n", (uintptr_t)newroot->value);
+           tree->root        = newroot;
+        } else { /* do nothing, item already present */ }
+        printf("values: %lu %lu\n", (uintptr_t)value, (uintptr_t)(tree->root->value));
     }
-    /* Splay the new node to the top of the tree */
-    (void)splay;
 }
 
 void* splaytree_lookup(splaytree_t* tree, uintptr_t key)
