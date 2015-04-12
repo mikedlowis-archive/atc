@@ -42,11 +42,9 @@ TEST_SUITE(Heap) {
     }
 
     TEST(Verify_Allocate_should_allocate_a_large_block_if_the_number_of_slots_is_greater_than_the_max) {
-        CHECK(false);
-        //heap_t* heap = heap_create();
-        //CHECK(NULL != heap_allocate(heap, 65));
-        //CHECK(heap->blocks != NULL);
-        //CHECK(heap->blocks->next == NULL);
-        //heap_destroy(heap);
+        heap_t* heap = heap_create();
+        CHECK(NULL != heap_allocate(heap, 65));
+        CHECK(NULL != heap->blocks->root->value);
+        heap_destroy(heap);
     }
 }
