@@ -153,6 +153,6 @@ void* splaytree_delete(splaytree_t* tree, uintptr_t key)
             destroy_node(tree, deadite);
         }
     }
-    return NULL;
+    return value;
 }
 
