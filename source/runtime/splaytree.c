@@ -6,7 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static node_t* create_node(void* value, node_t* left, node_t* right)
+#ifdef NDEBUG
+static
+#endif
+node_t* create_node(void* value, node_t* left, node_t* right)
 {
     node_t* node = (node_t*)malloc(sizeof(node_t));
     node->value  = value;

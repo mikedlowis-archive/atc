@@ -2,6 +2,12 @@
 #include "splaytree.h"
 #include <stdio.h>
 
+extern node_t* create_node(void* value, node_t* left, node_t* right);
+
+static node_t* node(uintptr_t val, node_t* left, node_t* right) {
+    return create_node((void*)val, left, right);
+}
+
 static int cmp_int(uintptr_t key, uintptr_t val) {
     return (key == val) ? 0 : (key < val) ? -1 : 1;
 }
@@ -88,7 +94,7 @@ TEST_SUITE(SplayTree) {
     TEST(Verify_Lookup_will_find_the_item_at_the_root)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
-        splaytree_insert(tree, 42, (void*)42);
+        tree->root = node(42, NULL, NULL);
         CHECK((void*)42 == splaytree_lookup(tree, 42));
         splaytree_destroy(tree);
     }
@@ -103,7 +109,7 @@ TEST_SUITE(SplayTree) {
     TEST(Verify_Lookup_will_return_null_if_value_is_not_present)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
-        splaytree_insert(tree, 42, (void*)42);
+        tree->root = node(42, NULL, NULL);
         CHECK(NULL == splaytree_lookup(tree, 43));
         splaytree_destroy(tree);
     }
@@ -111,8 +117,7 @@ TEST_SUITE(SplayTree) {
     TEST(Verify_Lookup_will_find_the_item_left_of_root_when_less_than)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
-        splaytree_insert(tree, 41, (void*)41);
-        splaytree_insert(tree, 42, (void*)42);
+        tree->root = node(42, node(41, NULL, NULL), NULL);
         CHECK((void*)41 == splaytree_lookup(tree, 41));
         splaytree_destroy(tree);
     }
@@ -120,27 +125,56 @@ TEST_SUITE(SplayTree) {
     TEST(Verify_Lookup_will_find_the_item_right_of_root_when_greater_than)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
-        splaytree_insert(tree, 43, (void*)43);
-        splaytree_insert(tree, 42, (void*)42);
+        tree->root = node(42, NULL, node(43, NULL, NULL));
         CHECK((void*)43 == splaytree_lookup(tree, 43));
         splaytree_destroy(tree);
     }
 
-    TEST(Verify_Lookup_will_find_the_item_right_of_root_when_greater_than)
+    TEST(Verify_Lookup_will_find_the_item_to_the_right_then_left_of_root)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
-        splaytree_insert(tree, 42, (void*)42);
-        splaytree_insert(tree, 43, (void*)43);
-        splaytree_insert(tree, 44, (void*)44);
-        splaytree_insert(tree, 45, (void*)45);
-        puts("----");
-        print_tree(tree->root);
-        CHECK((void*)42 == splaytree_lookup(tree, 42));
+        tree->root = node(42, NULL, node(44, node(43, NULL, NULL), NULL));
         print_tree(tree->root);
         void* value = splaytree_lookup(tree, 43);
         print_tree(tree->root);
-        //printf("%p\n", splaytree_lookup(tree, 43));
         CHECK((void*)43 == value);
+        print_tree(tree->root);
+        splaytree_destroy(tree);
+    }
+
+    TEST(Verify_Lookup_will_find_the_item_to_the_left_then_right_of_root)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        tree->root = node(44, node(42, NULL, node(43, NULL, NULL)), NULL);
+        print_tree(tree->root);
+        void* value = splaytree_lookup(tree, 43);
+        print_tree(tree->root);
+        CHECK((void*)43 == value);
+        print_tree(tree->root);
+        splaytree_destroy(tree);
+    }
+
+
+    TEST(Verify_Lookup_will_find_the_item_to_the_right_right_left_of_root)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        tree->root = node(42, NULL, node(43, NULL, node(45, node(44, NULL, NULL), NULL)));
+        print_tree(tree->root);
+        void* value = splaytree_lookup(tree, 44);
+        print_tree(tree->root);
+        CHECK((void*)44 == value);
+        print_tree(tree->root);
+        splaytree_destroy(tree);
+    }
+
+    TEST(Verify_Lookup_will_find_the_item_to_the_left_left_right_of_root)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        tree->root = node(42, node(41, node(39, NULL, node(40, NULL, NULL)), NULL), NULL);
+        print_tree(tree->root);
+        void* value = splaytree_lookup(tree, 40);
+        print_tree(tree->root);
+        CHECK((void*)40 == value);
         print_tree(tree->root);
         splaytree_destroy(tree);
     }
