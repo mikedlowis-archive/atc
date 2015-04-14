@@ -167,6 +167,24 @@ TEST_SUITE(SplayTree) {
         splaytree_destroy(tree);
     }
 
+    TEST(Verify_Lookup_will_stop_at_the_next_lowest_value_if_value_is_not_present_in_the_left_subtree)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        tree->root = node(42, node(38, node(36, NULL, NULL), node(40, NULL, NULL)), NULL);
+        CHECK(NULL == splaytree_lookup(tree, 41));
+        CHECK((void*)40 == tree->root->value);
+        splaytree_destroy(tree);
+    }
+
+    TEST(Verify_Lookup_will_stop_at_the_next_lowest_value_if_value_is_not_present_in_the_right_subtree)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        tree->root = node(42, NULL, node(46, node(44, NULL, NULL), node(48, NULL, NULL)));
+        CHECK(NULL == splaytree_lookup(tree, 43));
+        CHECK((void*)44 == tree->root->value);
+        splaytree_destroy(tree);
+    }
+
     /* Verify: splaytree_delete
      *************************************************************************/
     TEST(Verify_Delete_will_delete_the_item_at_the_root)
@@ -238,6 +256,14 @@ TEST_SUITE(SplayTree) {
     TEST(Verify_Delete_should_do_nothing_when_tree_empty)
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        CHECK(NULL == splaytree_delete(tree, 42));
+        splaytree_destroy(tree);
+    }
+
+    TEST(Verify_Delete_should_do_nothing_when_item_not_found)
+    {
+        splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
+        splaytree_insert(tree, 41, (void*)41);
         CHECK(NULL == splaytree_delete(tree, 42));
         splaytree_destroy(tree);
     }
