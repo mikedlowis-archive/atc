@@ -5,6 +5,9 @@
 #include "splaytree.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+extern void print_tree(node_t* tree);
 
 #ifdef NDEBUG
 static
@@ -49,38 +52,37 @@ static void splay(splaytree_t* tree, uintptr_t key) {
     node_t* subleft  = &subroots;
     node_t* subright = &subroots;
     node_t* root     = tree->root;
-    if (NULL != root) {
-        while (1) {
-            int cmp = tree->compare(key, root->value);
-            if (cmp < 0) {
+
+    while (1) {
+        int cmp = tree->compare(key, root->value);
+        if (cmp < 0) {
+            if (NULL == root->left) break;
+            if (tree->compare(key, root->left->value) < 0) {
+                root = rotate(root, RIGHT);
                 if (NULL == root->left) break;
-                if (tree->compare(key, root->left->value) < 0) {
-                    root = rotate(root, RIGHT);
-                    if (NULL == root->left) break;
-                }
-                subright->left = root;
-                subright = root;
-                root = root->left;
-            } else if (cmp > 0) {
-                if (NULL == root->right) break;
-                if (tree->compare(key, root->right->value) < 0) {
-                    root = rotate(root, LEFT);
-                    if (NULL == root->right) break;
-                }
-                subleft->right = root;
-                subleft = root;
-                root = root->right;
-            } else {
-                break;
             }
+            subright->left = root;
+            subright = root;
+            root = root->left;
+        } else if (cmp > 0) {
+            if (NULL == root->right) break;
+            if (tree->compare(key, root->right->value) > 0) {
+                root = rotate(root, LEFT);
+                if (NULL == root->right) break;
+            }
+            subleft->right = root;
+            subleft = root;
+            root = root->right;
+        } else {
+            break;
         }
     }
 
     /* assemble */
     subleft->right = root->left;
     subright->left = root->right;
-    root->left  = subroots.right;
-    root->right = subroots.left;
+    root->left     = subroots.right;
+    root->right    = subroots.left;
 
     /* Set the root */
     tree->root = root;

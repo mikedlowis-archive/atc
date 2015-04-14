@@ -134,11 +134,8 @@ TEST_SUITE(SplayTree) {
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
         tree->root = node(42, NULL, node(44, node(43, NULL, NULL), NULL));
-        print_tree(tree->root);
         void* value = splaytree_lookup(tree, 43);
-        print_tree(tree->root);
         CHECK((void*)43 == value);
-        print_tree(tree->root);
         splaytree_destroy(tree);
     }
 
@@ -146,11 +143,8 @@ TEST_SUITE(SplayTree) {
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
         tree->root = node(44, node(42, NULL, node(43, NULL, NULL)), NULL);
-        print_tree(tree->root);
         void* value = splaytree_lookup(tree, 43);
-        print_tree(tree->root);
         CHECK((void*)43 == value);
-        print_tree(tree->root);
         splaytree_destroy(tree);
     }
 
@@ -159,11 +153,8 @@ TEST_SUITE(SplayTree) {
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
         tree->root = node(42, NULL, node(43, NULL, node(45, node(44, NULL, NULL), NULL)));
-        print_tree(tree->root);
         void* value = splaytree_lookup(tree, 44);
-        print_tree(tree->root);
         CHECK((void*)44 == value);
-        print_tree(tree->root);
         splaytree_destroy(tree);
     }
 
@@ -171,11 +162,8 @@ TEST_SUITE(SplayTree) {
     {
         splaytree_t* tree = splaytree_create((del_fn_t)del_int, (cmp_fn_t)cmp_int);
         tree->root = node(42, node(41, node(39, NULL, node(40, NULL, NULL)), NULL), NULL);
-        print_tree(tree->root);
         void* value = splaytree_lookup(tree, 40);
-        print_tree(tree->root);
         CHECK((void*)40 == value);
-        print_tree(tree->root);
         splaytree_destroy(tree);
     }
 
