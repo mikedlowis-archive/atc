@@ -103,7 +103,7 @@ void heap_finish_collection(heap_t* heap)
 {
     /* All blocks remaining in the greylist now are unreachable so free them */
     splaytree_destroy(heap->greylist);
-    /* Now iterate over the sub heaps and make sure the full/available lists are in order */
+    /* Now iterate over the sub heaps and make sure the full/available lists are correct */
     for (unsigned int i = 0; i < NUM_HEAP_STACKS; i++) {
         segment_t* prev = NULL;
         segment_t* curr = heap->heaps[i].full;

@@ -47,4 +47,26 @@ TEST_SUITE(Heap) {
         CHECK(NULL != heap->blocks->root->value);
         heap_destroy(heap);
     }
+
+    /* Verify: heap_start_collection
+     *************************************************************************/
+    TEST(Verify_start_collection_prepares_the_heap_for_garbage_collection) {
+        heap_t* heap = heap_create();
+        splaytree_t* blocks = heap->blocks;
+        heap_start_collection(heap);
+        CHECK(heap->blocks != blocks);
+        CHECK(heap->greylist == blocks);
+        heap_destroy(heap);
+    }
+
+    /* Verify: heap_finish_collection
+     *************************************************************************/
+    TEST(Verify_finish_collection_cleans_up_after_garbage_collection) {
+        heap_t* heap = heap_create();
+        splaytree_t* blocks = heap->blocks;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        heap_destroy(heap);
+    }
 }
