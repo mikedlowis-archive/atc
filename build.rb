@@ -26,7 +26,6 @@ base_env = BuildEnv.new do |env|
     env['CFLAGS'] += ['-pg']
     env['LDFLAGS'] += ['-pg']
   end
-
   # Enable coverage info
   if Opts[:profile].include? "coverage"
     env['CFLAGS'] += ['--coverage']

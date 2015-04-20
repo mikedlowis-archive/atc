@@ -103,32 +103,28 @@ void heap_finish_collection(heap_t* heap)
 {
     /* All blocks remaining in the greylist now are unreachable so free them */
     splaytree_destroy(heap->greylist);
+    heap->greylist = NULL;
     /* Now iterate over the sub heaps and make sure the full/available lists are correct */
     for (unsigned int i = 0; i < NUM_HEAP_STACKS; i++) {
-        segment_t* prev = NULL;
-        segment_t* curr = heap->heaps[i].full;
+        segment_t* avail = heap->heaps[i].available;
+        segment_t* full  = NULL;
+        segment_t* curr  = heap->heaps[i].full;
         while(curr != NULL) {
-            if (segment_empty(curr)) {
-                segment_t* deadite = curr;
-                if (NULL != prev) {
-                    prev->next = curr->next;
-                    curr = curr->next;
-                }
-                deadite->next = NULL;
-                segment_destroy(deadite);
-            } else if (!segment_full(curr)) {
-                if (NULL != prev) {
-                    prev->next = curr->next;
-                    curr = curr->next;
-                }
-                curr->next = heap->heaps[i].available;
-                heap->heaps[i].available = curr;
+            segment_t* seg = curr;
+            curr = curr->next;
+            if (segment_full(seg)) {
+                seg->next = full;
+                full = seg;
+            } else if (segment_empty(seg)) {
+                seg->next = NULL;
+                segment_destroy(seg);
             } else {
-                prev = curr;
-                curr = curr->next;
+                seg->next = avail;
+                avail = seg;
             }
         }
-        segment_destroy(heap->heaps[i].available);
+        heap->heaps[i].available = avail;
+        heap->heaps[i].full = full;
     }
 }
 

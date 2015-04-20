@@ -69,4 +69,76 @@ TEST_SUITE(Heap) {
         CHECK(blocks != heap->blocks);
         heap_destroy(heap);
     }
+
+    TEST(Verify_finish_collection_moves_segments_from_the_full_list_to_the_available_list_when_some_blocks_are_reclaimed) {
+        heap_t* heap = heap_create();
+        segment_t* seg = segment_create(2, NULL);
+        seg->blockmap[0] = 42;
+        splaytree_t* blocks = heap->blocks;
+        heap->heaps[1].full = seg;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        CHECK(heap->heaps[1].available == seg);
+        CHECK(heap->heaps[1].full == NULL);
+        heap_destroy(heap);
+    }
+
+    TEST(Verify_finish_collection_moves_segments_from_the_full_list_to_the_available_list_when_some_blocks_are_reclaimed) {
+        heap_t* heap = heap_create();
+        segment_t* seg2 = segment_create(2, NULL);
+        segment_t* seg1 = segment_create(2, seg2);
+        seg1->blockmap[0] = 0;
+        seg2->blockmap[0] = 42;
+        splaytree_t* blocks = heap->blocks;
+        heap->heaps[1].full = seg1;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        CHECK(heap->heaps[1].available == seg2);
+        CHECK(heap->heaps[1].full == seg1);
+        heap_destroy(heap);
+    }
+
+    TEST(Verify_finish_collection_frees_empty_segments_in_the_full_list) {
+        heap_t* heap = heap_create();
+        segment_t* seg = segment_create(2, NULL);
+        splaytree_t* blocks = heap->blocks;
+        heap->heaps[1].full = seg;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        CHECK(heap->heaps[1].available == NULL);
+        CHECK(heap->heaps[1].full == NULL);
+        heap_destroy(heap);
+    }
+
+    TEST(Verify_finish_collection_frees_empty_segments_in_the_full_list) {
+        heap_t* heap = heap_create();
+        segment_t* seg2 = segment_create(2, NULL);
+        segment_t* seg1 = segment_create(2, seg2);
+        seg1->blockmap[0] = 0;
+        splaytree_t* blocks = heap->blocks;
+        heap->heaps[1].full = seg1;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        CHECK(heap->heaps[1].available == NULL);
+        CHECK(heap->heaps[1].full == seg1);
+        heap_destroy(heap);
+    }
+
+    TEST(Verify_finish_collection_does_nothing_when_full_list_contains_only_full_segments) {
+        heap_t* heap = heap_create();
+        segment_t* seg = segment_create(2, NULL);
+        seg->blockmap[0] = 0;
+        splaytree_t* blocks = heap->blocks;
+        heap->heaps[1].full = seg;
+        heap_start_collection(heap);
+        heap_finish_collection(heap);
+        CHECK(blocks != heap->blocks);
+        CHECK(heap->heaps[1].available == NULL);
+        CHECK(heap->heaps[1].full == seg);
+        heap_destroy(heap);
+    }
 }
