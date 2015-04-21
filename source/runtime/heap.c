@@ -87,8 +87,8 @@ static void* allocate_large_block(heap_t* heap, uint64_t ptrmap, uintptr_t num_s
 void* heap_allocate(heap_t* heap, uint64_t ptrmap, uintptr_t num_slots)
 {
     void* obj = NULL;
-    if (num_slots <= MAX_NUM_SLOTS) {
-        obj = allocate_small_block(heap, ptrmap, num_slots);
+    if (num_slots+1 <= MAX_NUM_SLOTS) {
+        obj = allocate_small_block(heap, ptrmap, num_slots+1);
     } else {
         obj = allocate_large_block(heap, ptrmap, num_slots);
     }
