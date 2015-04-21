@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-typedef struct {
-    uint64_t objmap;
-    uint8_t data[];
-} obj_t;
+//typedef struct {
+//    uint64_t objmap;
+//    uint8_t data[];
+//} obj_t;
 
 typedef struct root_t {
     struct root_t* next;
@@ -41,17 +41,20 @@ void gc_add_root(void* address, size_t size)
 
 void* gc_object(uint64_t objmap, size_t num_slots)
 {
-    obj_t* obj = heap_allocate(Heap, num_slots+1);
-    obj->objmap = objmap;
-    obj++;
-    return obj;
+    (void)objmap;
+    (void)num_slots;
+    return NULL;
+//    obj_t* obj = heap_allocate(Heap, num_slots+1);
+//    obj->objmap = objmap;
+//    obj++;
+//    return obj;
 }
 
 void* gc_allocate(size_t size)
 {
     size_t slot_sz   = sizeof(uintptr_t);
     size_t num_slots = (size + slot_sz - 1) / slot_sz;
-    return heap_allocate(Heap, num_slots + 1);
+    return heap_allocate(Heap, UINT16_MAX, num_slots + 1);
 }
 
 static void gc_scan_object(void* object) {

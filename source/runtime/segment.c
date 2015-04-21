@@ -73,7 +73,10 @@ void* segment_alloc(segment_t* seg) {
 
 void segment_clear_map(segment_t* seg)
 {
-    memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
+    while (NULL != seg) {
+        memset(seg->blockmap, 0xFFu, sizeof(seg->blockmap));
+        seg = seg->next;
+    }
 }
 
 void* segment_find_and_mark(segment_t* seg, uintptr_t addr) {

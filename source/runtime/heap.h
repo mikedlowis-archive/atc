@@ -16,6 +16,11 @@
 
 #define NUM_HEAP_STACKS (MAX_NUM_SLOTS)
 
+typedef struct {
+    uint64_t objmap;
+    uint8_t data[];
+} obj_t;
+
 typedef struct block_t {
     uintptr_t size;
     uintptr_t data[];
@@ -35,7 +40,7 @@ heap_t* heap_create(void);
 
 void heap_destroy(heap_t* heap);
 
-void* heap_allocate(heap_t* heap, uintptr_t num_slots);
+void* heap_allocate(heap_t* heap, uint64_t ptrmap, uintptr_t num_slots);
 
 void heap_start_collection(heap_t* heap);
 

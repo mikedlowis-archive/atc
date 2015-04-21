@@ -52,9 +52,8 @@ void heap_destroy(heap_t* heap)
     free(heap);
 }
 
-static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
+static void* allocate_small_block(heap_t* heap, uint64_t ptrmap, uintptr_t num_slots)
 {
-    void* object;
     uintptr_t index = (num_slots >= MIN_NUM_SLOTS) ? (num_slots - HEAP_INDEX_OFFSET) : 0;
     /* If we dont have any available segments, allocate a new one */
     if (NULL == heap->heaps[index].available) {
@@ -62,7 +61,8 @@ static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
         splaytree_insert(heap->segments, (uintptr_t)&(heap->heaps[index].available->start[0]), heap->heaps[index].available);
     }
     /* Allocate the object */
-    object = segment_alloc(heap->heaps[index].available);
+    obj_t* obj = (obj_t*)segment_alloc(heap->heaps[index].available);
+    obj->objmap = ptrmap;
     /* If we filled it up then move it to the full list */
     if (segment_full(heap->heaps[index].available)) {
         segment_t* current = heap->heaps[index].available;
@@ -70,25 +70,27 @@ static void* allocate_small_block(heap_t* heap, uintptr_t num_slots)
         current->next = heap->heaps[index].full;
         heap->heaps[index].full = current;
     }
-    return object;
+    return (void*)(obj+1);
 }
 
-static void* allocate_large_block(heap_t* heap, uintptr_t num_slots)
+static void* allocate_large_block(heap_t* heap, uint64_t ptrmap, uintptr_t num_slots)
 {
     uintptr_t size = (num_slots * sizeof(uintptr_t));
     block_t* blk = (block_t*)malloc(sizeof(block_t) + size);
     blk->size = size;
     splaytree_insert(heap->blocks, (uintptr_t)&blk->data[0], blk);
-    return (&blk->data[0]);
+    obj_t* obj = (obj_t*)(&blk->data[0]);
+    obj->objmap = ptrmap;
+    return (obj_t*)(obj+1);
 }
 
-void* heap_allocate(heap_t* heap, uintptr_t num_slots)
+void* heap_allocate(heap_t* heap, uint64_t ptrmap, uintptr_t num_slots)
 {
     void* obj = NULL;
     if (num_slots <= MAX_NUM_SLOTS) {
-        obj = allocate_small_block(heap, num_slots);
+        obj = allocate_small_block(heap, ptrmap, num_slots);
     } else {
-        obj = allocate_large_block(heap, num_slots);
+        obj = allocate_large_block(heap, ptrmap, num_slots);
     }
     return obj;
 }
@@ -97,6 +99,10 @@ void heap_start_collection(heap_t* heap)
 {
     heap->greylist = heap->blocks;
     heap->blocks   = splaytree_create((del_fn_t)free, (cmp_fn_t)block_compare);
+    for (unsigned int i = 0; i < NUM_HEAP_STACKS; i++) {
+        segment_clear_map(heap->heaps[i].available);
+        segment_clear_map(heap->heaps[i].full);
+    }
 }
 
 void heap_finish_collection(heap_t* heap)
@@ -130,7 +136,7 @@ void heap_finish_collection(heap_t* heap)
 
 void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
 {
-    void* obj = NULL;
+    obj_t* obj = NULL;
     segment_t* seg = splaytree_lookup(heap->segments, addr);
     if (NULL != seg) {
         obj = segment_find_and_mark(seg, addr);
@@ -138,9 +144,9 @@ void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
         block_t* block = splaytree_delete(heap->greylist, addr);
         if (NULL != block) {
             splaytree_insert(heap->blocks, addr, block);
-            obj = &block->data[0];
+            obj = (obj_t*)&block->data[0];
         }
     }
-    return obj;
+    return (obj == NULL) ? NULL : (void*)(obj+1);
 }
 
