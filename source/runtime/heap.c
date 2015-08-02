@@ -134,7 +134,7 @@ void heap_finish_collection(heap_t* heap)
     }
 }
 
-void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
+obj_t* heap_find_and_mark(heap_t* heap, uintptr_t addr)
 {
     obj_t* obj = NULL;
     segment_t* seg = splaytree_lookup(heap->segments, addr);
@@ -147,6 +147,6 @@ void* heap_find_and_mark(heap_t* heap, uintptr_t addr)
             obj = (obj_t*)&block->data[0];
         }
     }
-    return (obj == NULL) ? NULL : (void*)(obj+1);
+    return obj;
 }
 

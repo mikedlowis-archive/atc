@@ -46,13 +46,22 @@ void* gc_allocate(size_t size)
     return heap_allocate(Heap, UINT16_MAX, num_slots);
 }
 
-static void gc_scan_object(void* object) {
-    (void)object;
+static void gc_scan_object(obj_t* object) {
+    uintptr_t map = object->objmap;
+    for (unsigned int i = 0; i < sizeof(uintptr_t); i++) {
+        if (map & 1) {
+            obj_t* obj = heap_find_and_mark(Heap, object->data[i]);
+            if (NULL != obj) {
+                gc_scan_object(obj);
+            }
+        }
+        map = map >> 1;
+    }
 }
 
 static void gc_scan_region(uintptr_t* start, uintptr_t* stop) {
     for (; start < stop; start++) {
-        obj_t* obj = (obj_t*)heap_find_and_mark(Heap, *start);
+        obj_t* obj = heap_find_and_mark(Heap, *start);
         if (NULL != obj)
             gc_scan_object(obj);
     }

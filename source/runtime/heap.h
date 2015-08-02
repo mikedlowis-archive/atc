@@ -46,6 +46,6 @@ void heap_start_collection(heap_t* heap);
 
 void heap_finish_collection(heap_t* heap);
 
-void* heap_find_and_mark(heap_t* heap, uintptr_t addr);
+obj_t* heap_find_and_mark(heap_t* heap, uintptr_t addr);
 
 #endif /* HEAP_H */
